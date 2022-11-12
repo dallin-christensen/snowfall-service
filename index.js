@@ -1,6 +1,22 @@
-import puppeteer from 'puppeteer';
+const puppeteer = require('puppeteer')
+const smsTools = require('./smsTools.js')
 
-(async () => {
+const generateMessage = (amounts) => {
+  const { overnightAmount, twentyFourHourAmount } = amounts
+
+  return `Bachelor snowfall:\n${overnightAmount} Overnight\n${twentyFourHourAmount} in 24 Hours`
+}
+
+const deliverMessage = (message) => {
+  smsTools.sendSms({
+    body: message,
+    to: process.env.TWILIO_TO_NUMBER,
+    onSuccess: () => console.log('snowfall report successful'),
+    onError: (err) => console.error(err),
+  })
+}
+
+const snowfallReport = (async () => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
@@ -15,7 +31,10 @@ import puppeteer from 'puppeteer';
     return { overnightAmount, twentyFourHourAmount }
   }, amountResultsSelector);
 
-  console.log(amounts)
+  const message = generateMessage(amounts)
+  deliverMessage(message)
 
   await browser.close();
-})();
+});
+
+snowfallReport()
